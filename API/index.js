@@ -2,11 +2,37 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+
+
+
+const JWTSecret = 'wazsxredctfvygbuhnjmi';
 
 app.use(cors());
-
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+
+
+function auth(req,res,next){
+    const authToken = req.headers['authorization'];
+    if(authToken != undefined){
+        const bearer = authToken.split(' ');
+        var token = bearer[1];
+        jwt.verify(token, JWTSecret, (err,data)=>{
+            if(err){
+                res.status(401);
+                res.json({err: 'Token invalido'});
+            }else{
+                req.token = token;
+                req.loggedUser = {id: data.id, email: data.email};
+                next(); //tudo autorizado aqui
+            }
+        });
+    }else{
+        res.status(401);
+        res.json({err: 'Token invalido'});
+    }
+}
 
 var DB = { //db falso
     games: [
@@ -28,14 +54,29 @@ var DB = { //db falso
             year: 1980,
             price: 10
         }
+    ],
+    users: [
+        {
+            id: 1,
+            name: 'Richard Nunes',
+            email: 'rifernun@gmail.com',
+            password: '123456'
+        },
+        {
+            id: 2,
+            name: 'Nunes Richard',
+            email: 'nunes@gmail.com',
+            password: '654321'
+        }
     ]
 }
 //endpoint
-app.get('/games',(req,res)=>{
+app.get('/games',auth,(req,res)=>{
+    
     res.statusCode = 200; //requisição feita com sucesso
     res.json(DB.games); //listagem de games
 });
-app.get('/game/:id', (req,res)=>{
+app.get('/game/:id',auth, (req,res)=>{
     if(isNaN(req.params.id)){
         res.sendStatus(400);
     }else{
@@ -49,17 +90,17 @@ app.get('/game/:id', (req,res)=>{
         }
     }
 });
-app.post('/game', (req,res) => {
+app.post('/game',auth, (req,res) => {
     var {title,year,price} = req.body;
     DB.games.push({
-        id: 111,
+        id: DB.games.length + 1,
         title,
         year,
         price
     })
     res.sendStatus = 200;
 });
-app.delete('/game/:id', (req,res)=>{
+app.delete('/game/:id',auth, (req,res)=>{
     if(isNaN(req.params.id)){
         res.sendStatus(400);
     }else{
@@ -73,7 +114,7 @@ app.delete('/game/:id', (req,res)=>{
         }
     }
 });
-app.put('/game/:id', (req,res) => {
+app.put('/game/:id',auth, (req,res) => {
     if(isNaN(req.params.id)){
         res.sendStatus(400)
     }else{
@@ -96,6 +137,43 @@ app.put('/game/:id', (req,res) => {
         }
     }
 });
+
+app.post('/auth', (req,res)=>{
+    var {email,password} = req.body;
+
+    if(email != undefined){
+        var user = DB.users.find(user => user.email == email);
+        if(user != undefined){
+
+            if(user.password == password){
+                jwt.sign({id: user.id, email: user.email}, JWTSecret,{expiresIn: '48h'}, (err,token)=>{
+                    if(err){
+                        res.status(400);
+                        res.json({err: 'Falha interna'});
+                    }else{
+                        res.status(200);                
+                        res.json({token: token});
+                    }
+                });
+                
+            }else{
+                res.status(401);
+                res.json({err: 'Credenciais erradas'});
+            }
+
+
+        }else{
+            res.status(404);
+            res.json({err: 'E-mail enviado não existe'});
+        }
+    }else{
+        res.status(400);
+        res.json({err: 'E-mail invalido'});
+    }
+})
+
+
+
 app.listen(8080, ()=>{
     console.log('API rodando');
 });
