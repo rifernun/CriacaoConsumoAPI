@@ -3,8 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-
-
+const DB = require('./database');
 
 const JWTSecret = 'wazsxredctfvygbuhnjmi';
 
@@ -34,45 +33,8 @@ function auth(req,res,next){
     }
 }
 
-var DB = { //db falso
-    games: [
-        {
-            id: 1,
-            title: 'Call of Duty BO2',
-            year: 2015,
-            price: 15
-        },
-        {
-            id: 2,
-            title: 'Minecraft',
-            year: 2012,
-            price: 50
-        },
-        {
-            id: 3,
-            title: 'Tetris',
-            year: 1980,
-            price: 10
-        }
-    ],
-    users: [
-        {
-            id: 1,
-            name: 'Richard Nunes',
-            email: 'rifernun@gmail.com',
-            password: '123456'
-        },
-        {
-            id: 2,
-            name: 'Nunes Richard',
-            email: 'nunes@gmail.com',
-            password: '654321'
-        }
-    ]
-}
 //endpoint
-app.get('/games',auth,(req,res)=>{
-    
+app.get('/games',auth,(req,res)=>{ //feito
     var HATEOAS = [
         {
             href: 'http://localhost/8080/game/0',
@@ -100,10 +62,14 @@ app.get('/games',auth,(req,res)=>{
             rel: 'login'
         }
     ];
-
     res.statusCode = 200; //requisição feita com sucesso
-    res.json({games: DB.games, _links: HATEOAS}); //listagem de games
+    DB.select().table('games').then(data => {
+        res.json({games: data, _links: HATEOAS}); //listagem de games
+    }).catch(err => {
+        console.log(err);
+    });
 });
+
 app.get('/game/:id',auth, (req,res)=>{
     if(isNaN(req.params.id)){
         res.sendStatus(400);
@@ -151,6 +117,7 @@ app.post('/game',auth, (req,res) => {
     })
     res.sendStatus = 200;
 });
+
 app.delete('/game/:id',auth, (req,res)=>{
     if(isNaN(req.params.id)){
         res.sendStatus(400);
@@ -233,9 +200,7 @@ app.post('/auth', (req,res)=>{
         res.status(400);
         res.json({err: 'E-mail invalido'});
     }
-})
-
-
+});
 
 app.listen(8080, ()=>{
     console.log('API rodando');
