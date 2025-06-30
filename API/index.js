@@ -150,39 +150,39 @@ app.put('/game/:id',auth, (req,res) => { //feito
     }
 });
 
-app.post('/auth', (req,res)=>{
+app.post('/auth', (req,res)=>{ //feito
     var {email,password} = req.body;
 
     if(email != undefined){
-        var user = DB.users.find(user => user.email == email);
-        if(user != undefined){
-
-            if(user.password == password){
-                jwt.sign({id: user.id, email: user.email}, JWTSecret,{expiresIn: '48h'}, (err,token)=>{
-                    if(err){
-                        res.status(400);
-                        res.json({err: 'Falha interna'});
+        DB.select('*').where({email: email}).table('users').then(user => {
+            if(user != undefined){
+                DB.select('password').where({email: email}).table('users').then(userPassword => {
+                    if(userPassword[0].password == password){
+                    jwt.sign({id: user.id, email: user.email}, JWTSecret,{expiresIn: '48h'}, (err,token)=>{
+                        if(err){
+                            res.status(400);
+                            res.json({err: 'Falha interna'});
+                        }else{
+                            res.status(200);                
+                            res.json({token: token});
+                        }
+                    });
                     }else{
-                        res.status(200);                
-                        res.json({token: token});
+                        res.status(401);
+                        res.json({err: 'Credenciais erradas'});
                     }
-                });
-                
+                })
             }else{
-                res.status(401);
-                res.json({err: 'Credenciais erradas'});
+                res.status(404);
+                res.json({err: 'E-mail enviado não existe'});
             }
-
-
-        }else{
-            res.status(404);
-            res.json({err: 'E-mail enviado não existe'});
-        }
+        })
+        
     }else{
         res.status(400);
         res.json({err: 'E-mail invalido'});
     }
-});
+})
 
 app.listen(8080, ()=>{
     console.log('API rodando');
