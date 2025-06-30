@@ -111,15 +111,14 @@ app.get('/game/:id',auth, (req,res)=>{ //feito
         
     }
 });
-app.post('/game',auth, (req,res) => {
+
+app.post('/game',auth, (req,res) => { //feito
     var {title,year,price} = req.body;
-    DB.games.push({
-        id: DB.games.length + 1,
-        title,
-        year,
-        price
+    DB.insert({title: title, year: year, price: price}).table('games').then(data => {
+        res.sendStatus = 200;
+    }).catch(err => {
+        console.log(err);
     })
-    res.sendStatus = 200;
 });
 
 app.delete('/game/:id',auth, (req,res)=>{
