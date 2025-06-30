@@ -114,11 +114,15 @@ app.get('/game/:id',auth, (req,res)=>{ //feito
 
 app.post('/game',auth, (req,res) => { //feito
     var {title,year,price} = req.body;
-    DB.insert({title: title, year: year, price: price}).table('games').then(data => {
-        res.sendStatus = 200;
-    }).catch(err => {
-        console.log(err);
-    })
+    if(title == '' || year == '' || price == ''){
+        res.redirect('/');
+    }else{
+        DB.insert({title: title, year: year, price: price}).table('games').then(data => {
+            res.sendStatus = 200;
+        }).catch(err => {
+            console.log(err);
+        })
+    }
 });
 
 app.delete('/game/:id',auth, (req,res)=>{ //feito

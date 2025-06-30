@@ -50,12 +50,11 @@
             var token = res.data.token;
             localStorage.setItem('token', token);
             axiosConfig.headers.Authorization = 'Bearer ' + localStorage.getItem('token');
+            alert(localStorage.getItem('token'));
         }).catch(err => {
             alert('Login invalido');
         });
     }
-
-    
 
     function createGame(){
         var titleInput = document.getElementById('title');
@@ -120,7 +119,7 @@
 
 
     axios.get('http://localhost:8080/games', axiosConfig).then(response => {
-        var games = response.data
+        var games = response.data.games;
         var lista = document.getElementById('games');
 
         games.forEach(game => {
