@@ -134,39 +134,19 @@ app.delete('/game/:id',auth, (req,res)=>{ //feito
         });
     }
 });
-app.put('/game/:id',auth, (req,res) => {
+
+app.put('/game/:id',auth, (req,res) => { //feito
     if(isNaN(req.params.id)){
         res.sendStatus(400)
     }else{
         var id = parseInt(req.params.id);
-        var HATEOAS = [
-            {
-                href: 'http://localhost/8080/game/'+id,
-                method: 'GET',
-                rel: 'get_game'
-            },
-            {
-                href: 'http://localhost/8080/game/'+id,
-                method: 'DELETE',
-                rel: 'delete_game'
-            },
-        ];
-        var game = DB.games.find(g => g.id == id); //findOne
-        if(game != undefined){
-            var {title,year,price} = req.body;
-            if(title != undefined){
-                game.title = title;
-            }
-            if(year != undefined){
-                game.year = year;
-            }
-            if(price != undefined){
-                game.price = price;
-            }
+        var {title,year,price} = req.body;
+        DB.where({id:id}).update({title: title, year: year, price: price}).table('games').then(() => {
             res.sendStatus(200);
-        }else{
+        }).catch(err => {
+            console.log(err);
             res.sendStatus(404);
-        }
+        });
     }
 });
 
