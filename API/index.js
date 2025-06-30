@@ -70,7 +70,7 @@ app.get('/games',auth,(req,res)=>{ //feito
     });
 });
 
-app.get('/game/:id',auth, (req,res)=>{
+app.get('/game/:id',auth, (req,res)=>{ //feito
     if(isNaN(req.params.id)){
         res.sendStatus(400);
     }else{
@@ -98,13 +98,17 @@ app.get('/game/:id',auth, (req,res)=>{
                 rel: 'get_all_games'
             }
         ];
-        var game = DB.games.find(g => g.id == id); //findOne
-        if(game != undefined){
-            res.statusCode = 200;
-            res.json({game: game, _links: HATEOAS});
-        }else{
-            res.sendStatus(404);
-        }
+        DB.select().where({id: id}).table('games').then(game => {
+            if(game != undefined){
+                res.statusCode = 200;
+                res.json({game: game, _links: HATEOAS});
+            }else{
+                res.sendStatus(404);
+            }
+        }).catch(err => {
+            console.log(err);
+        }); 
+        
     }
 });
 app.post('/game',auth, (req,res) => {
