@@ -121,18 +121,17 @@ app.post('/game',auth, (req,res) => { //feito
     })
 });
 
-app.delete('/game/:id',auth, (req,res)=>{
+app.delete('/game/:id',auth, (req,res)=>{ //feito
     if(isNaN(req.params.id)){
         res.sendStatus(400);
     }else{
         var id = parseInt(req.params.id);
-        var index = DB.games.findIndex(g => g.id == id);
-        if(index == -1){
-            res.statusCode(400);
-        }else{
-            DB.games.splice(index,1);
+        DB.where({id: id}).delete().table('games').then(data => {
             res.sendStatus(200);
-        }
+        }).catch(err => {
+            res.statusCode(400);
+            console.log(err);
+        });
     }
 });
 app.put('/game/:id',auth, (req,res) => {
